@@ -22,5 +22,5 @@ jobs:
       with:
         target: test
       env:
-        PROJECT_TEST_VERBOSE: "1"
-        PROJECT_TEST_COVER: "1"
+        POKEDEX_TEST_VERBOSE: "1"
+        POKEDEX_TEST_COVER: "1"
