@@ -1,4 +1,4 @@
-package main
+package pokeapi
 
 // LocationArea is a section of areas such as floors in a building or a cave.
 type LocationArea struct {
@@ -12,8 +12,8 @@ type LocationArea struct {
 }
 
 type EncounterMethodRate struct {
-	EncounterMethod NamedAPIResource        `json:"encounter_method"`
-	VersionDetails  EncounterVersionDetails `json:"version_details"`
+	EncounterMethod NamedAPIResource          `json:"encounter_method"`
+	VersionDetails  []EncounterVersionDetails `json:"version_details"`
 }
 
 type EncounterVersionDetails struct {
@@ -44,16 +44,4 @@ type Encounter struct {
 	ConditionValues []NamedAPIResource `json:"condition_values"`
 	Chance          int                `json:"chance"`
 	Method          NamedAPIResource   `json:"method"`
-}
-
-type NamedAPIResourceList struct {
-	Count    int                `json:"count"`
-	Next     *string             `json:"next"`
-	Previous *string             `json:"previous"`
-	Results  []NamedAPIResource `json:"results"`
-}
-
-type NamedAPIResource struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
 }
