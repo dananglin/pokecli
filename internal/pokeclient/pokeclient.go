@@ -40,53 +40,30 @@ func NewClient(cacheCleanupInterval, timeout time.Duration) *Client {
 func (c *Client) GetNamedAPIResourceList(url string) (pokeapi.NamedAPIResourceList, error) {
 	var list pokeapi.NamedAPIResourceList
 
-	dataFromCache, exists := c.cache.Get(url)
+	data, exists := c.cache.Get(url)
 	if exists {
 		fmt.Println("Using data from cache.")
 
-		if err := decodeJSON(dataFromCache, &list); err != nil {
+		if err := decodeJSON(data, &list); err != nil {
 			return pokeapi.NamedAPIResourceList{}, fmt.Errorf("unable to decode the data from the cache: %w", err)
 		}
 
 		return list, nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return pokeapi.NamedAPIResourceList{}, fmt.Errorf("error creating the HTTP request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(request)
-	if err != nil {
-		return pokeapi.NamedAPIResourceList{}, fmt.Errorf("error getting the response from the server: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return pokeapi.NamedAPIResourceList{}, fmt.Errorf(
-			"received a bad status from %s: (%d) %s",
-			url,
-			resp.StatusCode,
-			resp.Status,
-		)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	data, err := c.sendRequest(url)
 	if err != nil {
 		return pokeapi.NamedAPIResourceList{}, fmt.Errorf(
-			"unable to read the response from the server: %w",
+			"received an error after sending the request to the server: %w",
 			err,
 		)
 	}
 
-	if err := decodeJSON(body, &list); err != nil {
+	if err := decodeJSON(data, &list); err != nil {
 		return pokeapi.NamedAPIResourceList{}, fmt.Errorf("unable to decode the data from the server: %w", err)
 	}
 
-	c.cache.Add(url, body)
+	c.cache.Add(url, data)
 
 	return list, nil
 }
@@ -96,53 +73,30 @@ func (c *Client) GetLocationArea(location string) (pokeapi.LocationArea, error) 
 
 	url := LocationAreaPath + "/" + location + "/"
 
-	dataFromCache, exists := c.cache.Get(url)
+	data, exists := c.cache.Get(url)
 	if exists {
 		fmt.Println("Using data from cache.")
 
-		if err := decodeJSON(dataFromCache, &locationArea); err != nil {
+		if err := decodeJSON(data, &locationArea); err != nil {
 			return pokeapi.LocationArea{}, fmt.Errorf("unable to decode the data from the cache: %w", err)
 		}
 
 		return locationArea, nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-	defer cancel()
-
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return pokeapi.LocationArea{}, fmt.Errorf("error creating the HTTP request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(request)
-	if err != nil {
-		return pokeapi.LocationArea{}, fmt.Errorf("error getting the response from the server: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return pokeapi.LocationArea{}, fmt.Errorf(
-			"received a bad status from %s: (%d) %s",
-			url,
-			resp.StatusCode,
-			resp.Status,
-		)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	data, err := c.sendRequest(url)
 	if err != nil {
 		return pokeapi.LocationArea{}, fmt.Errorf(
-			"unable to read the response from the server: %w",
+			"received an error after sending the request to the server: %w",
 			err,
 		)
 	}
 
-	if err := decodeJSON(body, &locationArea); err != nil {
+	if err := decodeJSON(data, &locationArea); err != nil {
 		return pokeapi.LocationArea{}, fmt.Errorf("unable to decode the data from the server: %w", err)
 	}
 
-	c.cache.Add(url, body)
+	c.cache.Add(url, data)
 
 	return locationArea, nil
 }
@@ -152,33 +106,51 @@ func (c *Client) GetPokemon(pokemonName string) (pokeapi.Pokemon, error) {
 
 	url := PokemonPath + "/" + pokemonName + "/"
 
-	dataFromCache, exists := c.cache.Get(url)
+	data, exists := c.cache.Get(url)
 	if exists {
 		fmt.Println("Using data from cache.")
 
-		if err := decodeJSON(dataFromCache, &pokemon); err != nil {
+		if err := decodeJSON(data, &pokemon); err != nil {
 			return pokeapi.Pokemon{}, fmt.Errorf("unable to decode the data from the cache: %w", err)
 		}
 
 		return pokemon, nil
 	}
 
+	data, err := c.sendRequest(url)
+	if err != nil {
+		return pokeapi.Pokemon{}, fmt.Errorf(
+			"received an error after sending the request to the server: %w",
+			err,
+		)
+	}
+
+	if err := decodeJSON(data, &pokemon); err != nil {
+		return pokeapi.Pokemon{}, fmt.Errorf("unable to decode the data from the server: %w", err)
+	}
+
+	c.cache.Add(url, data)
+
+	return pokemon, nil
+}
+
+func (c *Client) sendRequest(url string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return pokeapi.Pokemon{}, fmt.Errorf("error creating the HTTP request: %w", err)
+		return []byte{}, fmt.Errorf("error creating the HTTP request: %w", err)
 	}
 
 	resp, err := c.httpClient.Do(request)
 	if err != nil {
-		return pokeapi.Pokemon{}, fmt.Errorf("error getting the response from the server: %w", err)
+		return []byte{}, fmt.Errorf("error getting the response from the server: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return pokeapi.Pokemon{}, fmt.Errorf(
+		return []byte{}, fmt.Errorf(
 			"received a bad status from %s: (%d) %s",
 			url,
 			resp.StatusCode,
@@ -186,21 +158,15 @@ func (c *Client) GetPokemon(pokemonName string) (pokeapi.Pokemon, error) {
 		)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return pokeapi.Pokemon{}, fmt.Errorf(
+		return []byte{}, fmt.Errorf(
 			"unable to read the response from the server: %w",
 			err,
 		)
 	}
 
-	if err := decodeJSON(body, &pokemon); err != nil {
-		return pokeapi.Pokemon{}, fmt.Errorf("unable to decode the data from the server: %w", err)
-	}
-
-	c.cache.Add(url, body)
-
-	return pokemon, nil
+	return data, nil
 }
 
 func decodeJSON(data []byte, value any) error {
