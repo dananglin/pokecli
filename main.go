@@ -247,6 +247,13 @@ func catchFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) callback
 
 		pokemonName := args[0]
 
+		if _, caught := trainer.GetPokemonFromPokedex(pokemonName); caught {
+			return fmt.Errorf(
+				"you've already caught a %s",
+				pokemonName,
+			)
+		}
+
 		pokemonDetails, err := client.GetPokemon(pokemonName)
 		if err != nil {
 			return fmt.Errorf(
