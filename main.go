@@ -63,6 +63,10 @@ func run() {
 			description: "List the names of all the Pokemon in your Pokedex",
 			callback:    commands.PokedexFunc(trainer),
 		},
+		"release": {
+			description: "Release a Pokemon back into the wild",
+			callback:    commands.ReleaseFunc(trainer),
+		},
 		"visit": {
 			description: "Visit a location area",
 			callback:    commands.VisitFunc(client, trainer),

@@ -48,6 +48,10 @@ func (t *Trainer) GetPokemonFromPokedex(name string) (pokeapi.Pokemon, bool) {
 	return details, ok
 }
 
+func (t *Trainer) RemovePokemonFromPokedex(name string) {
+	delete(t.pokedex, name)
+}
+
 func (t *Trainer) ListAllPokemonFromPokedex() {
 	if len(t.pokedex) == 0 {
 		fmt.Println("You have no Pokemon in your Pokedex.")
