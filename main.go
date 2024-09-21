@@ -11,26 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/api/pokeapi"
 	"codeflow.dananglin.me.uk/apollo/pokedex/internal/pokeclient"
+	"codeflow.dananglin.me.uk/apollo/pokedex/internal/poketrainer"
 )
 
-type State struct {
-	Previous *string
-	Next     *string
-}
+type callbackFunc func(args []string) error
 
 type command struct {
 	name        string
 	description string
 	callback    callbackFunc
 }
-
-type callbackFunc func(args []string) error
-
-type pokedex map[string]pokeapi.Pokemon
-
-var dexter = make(pokedex)
 
 func main() {
 	run()
@@ -42,48 +33,53 @@ func run() {
 		10*time.Second,
 	)
 
-	var state State
+	trainer := poketrainer.NewTrainer()
 
 	commandMap := map[string]command{
+		"catch": {
+			name:        "catch",
+			description: "Catch a Pokemon and add it to your Pokedex",
+			callback:    catchFunc(client, trainer),
+		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
 			callback:    exitFunc,
 		},
-		"help": {
-			name:        "help",
-			description: "Displays a help message",
-			callback:    nil,
-		},
-		"map": {
-			name:        "map",
-			description: "Displays the next 20 locations in the Pokemon world",
-			callback:    mapFunc(client, &state),
-		},
-		"mapb": {
-			name:        "map back",
-			description: "Displays the previous 20 locations in the Pokemon world",
-			callback:    mapBFunc(client, &state),
-		},
 		"explore": {
 			name:        "explore",
-			description: "Lists all the Pokemon in a given area",
-			callback:    exploreFunc(client),
+			description: "List all the Pokemon in a given area",
+			callback:    exploreFunc(client, trainer),
 		},
-		"catch": {
-			name:        "catch",
-			description: "Catches a Pokemon and adds them to your Pokedex",
-			callback:    catchFunc(client),
+		"help": {
+			name:        "help",
+			description: "Display the help message",
+			callback:    nil,
 		},
 		"inspect": {
 			name:        "inspect",
-			description: "Inspects a Pokemon from your Pokedex",
-			callback:    inspectFunc(),
+			description: "Inspect a Pokemon from your Pokedex",
+			callback:    inspectFunc(trainer),
+		},
+		"map": {
+			name:        "map",
+			description: "Display the next 20 locations in the Pokemon world",
+			callback:    mapFunc(client, trainer),
+		},
+		"mapb": {
+			name:        "map back",
+			description: "Display the previous 20 locations in the Pokemon world",
+			callback:    mapBFunc(client, trainer),
 		},
 		"pokedex": {
 			name:        "pokedex",
-			description: "Lists the names of all the Pokemon in your Pokedex",
-			callback:    pokedexFunc(),
+			description: "List the names of all the Pokemon in your Pokedex",
+			callback:    pokedexFunc(trainer),
+		},
+		"visit": {
+			name:        "visit",
+			description: "Visit a location area",
+			callback:    visitFunc(client, trainer),
 		},
 	}
 
@@ -158,47 +154,36 @@ func exitFunc(_ []string) error {
 	return nil
 }
 
-func mapFunc(client *pokeclient.Client, state *State) callbackFunc {
+func mapFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) callbackFunc {
 	return func(_ []string) error {
-		url := state.Next
+		url := trainer.NextLocationArea()
 		if url == nil {
 			url = new(string)
 			*url = pokeclient.LocationAreaPath
 		}
 
-		return printResourceList(client, *url, state)
+		return printResourceList(client, *url, trainer.UpdateLocationAreas)
 	}
 }
 
-func mapBFunc(client *pokeclient.Client, state *State) callbackFunc {
+func mapBFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) callbackFunc {
 	return func(_ []string) error {
-		url := state.Previous
+		url := trainer.PreviousLocationArea()
 		if url == nil {
 			return fmt.Errorf("no previous locations available")
 		}
 
-		return printResourceList(client, *url, state)
+		return printResourceList(client, *url, trainer.UpdateLocationAreas)
 	}
 }
 
-func exploreFunc(client *pokeclient.Client) callbackFunc {
-	return func(args []string) error {
-		if args == nil {
-			return errors.New("the location has not been specified")
-		}
+func exploreFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) callbackFunc {
+	return func(_ []string) error {
+		locationAreaName := trainer.CurrentLocationAreaName()
 
-		if len(args) != 1 {
-			return fmt.Errorf(
-				"unexpected number of locations: want 1; got %d",
-				len(args),
-			)
-		}
+		fmt.Printf("Exploring %s...\n", locationAreaName)
 
-		location := args[0]
-
-		fmt.Println("Exploring", location)
-
-		locationArea, err := client.GetLocationArea(location)
+		locationArea, err := client.GetLocationArea(locationAreaName)
 		if err != nil {
 			return fmt.Errorf(
 				"unable to get the location area: %w",
@@ -216,7 +201,38 @@ func exploreFunc(client *pokeclient.Client) callbackFunc {
 	}
 }
 
-func catchFunc(client *pokeclient.Client) callbackFunc {
+func visitFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) callbackFunc {
+	return func(args []string) error {
+		if args == nil {
+			return errors.New("the location area has not been specified")
+		}
+
+		if len(args) != 1 {
+			return fmt.Errorf(
+				"unexpected number of location areas: want 1; got %d",
+				len(args),
+			)
+		}
+
+		locationAreaName := args[0]
+
+		locationArea, err := client.GetLocationArea(locationAreaName)
+		if err != nil {
+			return fmt.Errorf(
+				"unable to get the location area: %w",
+				err,
+			)
+		}
+
+		trainer.UpdateCurrentLocationAreaName(locationArea.Name)
+
+		fmt.Println("You are now visiting", locationArea.Name)
+
+		return nil
+	}
+}
+
+func catchFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) callbackFunc {
 	return func(args []string) error {
 		if args == nil {
 			return errors.New("the name of the Pokemon has not been specified")
@@ -231,9 +247,7 @@ func catchFunc(client *pokeclient.Client) callbackFunc {
 
 		pokemonName := args[0]
 
-		fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
-
-		pokemon, err := client.GetPokemon(pokemonName)
+		pokemonDetails, err := client.GetPokemon(pokemonName)
 		if err != nil {
 			return fmt.Errorf(
 				"unable to get the information on %s: %w",
@@ -242,10 +256,41 @@ func catchFunc(client *pokeclient.Client) callbackFunc {
 			)
 		}
 
+		encountersPath := pokemonDetails.LocationAreaEncounters
+
+		encounterAreas, err := client.GetPokemonLocationAreas(encountersPath)
+		if err != nil {
+			return fmt.Errorf(
+				"unable to get the Pokemon's possible encounter areas: %w",
+				err,
+			)
+		}
+
+		validLocationArea := false
+		currentLocation := trainer.CurrentLocationAreaName()
+
+		for _, area := range slices.All(encounterAreas) {
+			if currentLocation == area.LocationArea.Name {
+				validLocationArea = true
+
+				break
+			}
+		}
+
+		if !validLocationArea {
+			return fmt.Errorf(
+				"%s cannot be found in %s",
+				pokemonName,
+				currentLocation,
+			)
+		}
+
 		chance := 50
 
+		fmt.Printf("Throwing a Pokeball at %s...\n", pokemonName)
+
 		if caught := catchPokemon(chance); caught {
-			dexter[pokemonName] = pokemon
+			trainer.AddPokemonToPokedex(pokemonName, pokemonDetails)
 			fmt.Printf("%s was caught!\nYou may now inspect it with the inspect command.\n", pokemonName)
 		} else {
 			fmt.Printf("%s escaped!\n", pokemonName)
@@ -255,7 +300,7 @@ func catchFunc(client *pokeclient.Client) callbackFunc {
 	}
 }
 
-func inspectFunc() callbackFunc {
+func inspectFunc(trainer *poketrainer.Trainer) callbackFunc {
 	return func(args []string) error {
 		if args == nil {
 			return errors.New("the name of the Pokemon has not been specified")
@@ -270,7 +315,7 @@ func inspectFunc() callbackFunc {
 
 		pokemonName := args[0]
 
-		pokemon, ok := dexter[pokemonName]
+		pokemon, ok := trainer.GetPokemonFromPokedex(pokemonName)
 		if !ok {
 			return fmt.Errorf("you have not caught %s", pokemonName)
 		}
@@ -302,32 +347,27 @@ func inspectFunc() callbackFunc {
 	}
 }
 
-func pokedexFunc() callbackFunc {
+func pokedexFunc(trainer *poketrainer.Trainer) callbackFunc {
 	return func(_ []string) error {
-		if len(dexter) == 0 {
-			fmt.Println("You have no Pokemon in your Pokedex")
-
-			return nil
-		}
-
-		fmt.Println("Your Pokedex:")
-
-		for name := range maps.All(dexter) {
-			fmt.Println("  -", name)
-		}
+		trainer.ListAllPokemonFromPokedex()
 
 		return nil
 	}
 }
 
-func printResourceList(client *pokeclient.Client, url string, state *State) error {
+func printResourceList(
+	client *pokeclient.Client,
+	url string,
+	updateStateFunc func(previous *string, next *string),
+) error {
 	list, err := client.GetNamedAPIResourceList(url)
 	if err != nil {
 		return fmt.Errorf("unable to get the list of resources: %w", err)
 	}
 
-	state.Next = list.Next
-	state.Previous = list.Previous
+	if updateStateFunc != nil {
+		updateStateFunc(list.Previous, list.Next)
+	}
 
 	for _, location := range slices.All(list.Results) {
 		fmt.Println(location.Name)

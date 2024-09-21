@@ -11,6 +11,11 @@ type LocationArea struct {
 	PokemonEncounters    []PokemonEncounter    `json:"pokemon_encounters"`
 }
 
+type LocationAreaEncounter struct {
+	LocationArea   NamedAPIResource          `json:"location_area"`
+	VersionDetails []VersionEncounterDetails `json:"version_details"`
+}
+
 type EncounterMethodRate struct {
 	EncounterMethod NamedAPIResource          `json:"encounter_method"`
 	VersionDetails  []EncounterVersionDetails `json:"version_details"`

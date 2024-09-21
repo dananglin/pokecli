@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	baseURL string = "https://pokeapi.co/api/v2"
+	baseURL string = "https://pokeapi.co"
 
-	LocationAreaPath = baseURL + "/location-area"
-	PokemonPath      = baseURL + "/pokemon"
+	LocationAreaPath = baseURL + "/api/v2/location-area"
+	PokemonPath      = baseURL + "/api/v2/pokemon"
 )
 
 type Client struct {
@@ -42,7 +42,7 @@ func (c *Client) GetNamedAPIResourceList(url string) (pokeapi.NamedAPIResourceLi
 
 	data, exists := c.cache.Get(url)
 	if exists {
-		fmt.Println("Using data from cache.")
+		fmt.Println("(using data from cache)")
 
 		if err := decodeJSON(data, &list); err != nil {
 			return pokeapi.NamedAPIResourceList{}, fmt.Errorf("unable to decode the data from the cache: %w", err)
@@ -75,7 +75,7 @@ func (c *Client) GetLocationArea(location string) (pokeapi.LocationArea, error) 
 
 	data, exists := c.cache.Get(url)
 	if exists {
-		fmt.Println("Using data from cache.")
+		fmt.Println("(using data from cache)")
 
 		if err := decodeJSON(data, &locationArea); err != nil {
 			return pokeapi.LocationArea{}, fmt.Errorf("unable to decode the data from the cache: %w", err)
@@ -108,7 +108,7 @@ func (c *Client) GetPokemon(pokemonName string) (pokeapi.Pokemon, error) {
 
 	data, exists := c.cache.Get(url)
 	if exists {
-		fmt.Println("Using data from cache.")
+		fmt.Println("(using data from cache)")
 
 		if err := decodeJSON(data, &pokemon); err != nil {
 			return pokeapi.Pokemon{}, fmt.Errorf("unable to decode the data from the cache: %w", err)
@@ -132,6 +132,36 @@ func (c *Client) GetPokemon(pokemonName string) (pokeapi.Pokemon, error) {
 	c.cache.Add(url, data)
 
 	return pokemon, nil
+}
+
+func (c *Client) GetPokemonLocationAreas(url string) ([]pokeapi.LocationAreaEncounter, error) {
+	var locationAreaEncounters []pokeapi.LocationAreaEncounter
+
+	data, exists := c.cache.Get(url)
+	if exists {
+		fmt.Println("(using data from cache)")
+
+		if err := decodeJSON(data, &locationAreaEncounters); err != nil {
+			return []pokeapi.LocationAreaEncounter{}, fmt.Errorf(
+				"unable to decode the data from the cache: %w",
+				err,
+			)
+		}
+	}
+
+	data, err := c.sendRequest(url)
+	if err != nil {
+		return []pokeapi.LocationAreaEncounter{}, fmt.Errorf(
+			"received an error after sending the request to the server: %w",
+			err,
+		)
+	}
+
+	if err := decodeJSON(data, &locationAreaEncounters); err != nil {
+		return []pokeapi.LocationAreaEncounter{}, fmt.Errorf("unable to decode the data from the server: %w", err)
+	}
+
+	return locationAreaEncounters, nil
 }
 
 func (c *Client) sendRequest(url string) ([]byte, error) {
