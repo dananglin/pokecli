@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"maps"
 
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/api/pokeapi"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/api/pokeapi"
 )
 
 type Trainer struct {

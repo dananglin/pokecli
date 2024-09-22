@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/commands"
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/pokeclient"
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/poketrainer"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/commands"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/pokeclient"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/poketrainer"
 )
 
 type command struct {

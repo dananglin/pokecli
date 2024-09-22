@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/api/pokeapi"
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/pokecache"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/api/pokeapi"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/pokecache"
 )
 
 const (

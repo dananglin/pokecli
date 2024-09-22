@@ -20,7 +20,7 @@ linters-settings:
         - $all
         allow:
         - $gostd
-        - codeflow.dananglin.me.uk/apollo/pokedex
+        - codeflow.dananglin.me.uk/apollo/pokecli
   lll:
     line-length: 140
 

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	app                  = "pokedex"
+	app                  = "pokecli"
 	defaultInstallPrefix = "/usr/local"
 	envInstallPrefix     = "POKEDEX_INSTALL_PREFIX"
 	envTestVerbose       = "POKEDEX_TEST_VERBOSE"

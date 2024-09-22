@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/poketrainer"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/poketrainer"
 )
 
 func ReleaseFunc(trainer *poketrainer.Trainer) CommandFunc {

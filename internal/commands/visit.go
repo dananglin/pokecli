@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/pokeclient"
-	"codeflow.dananglin.me.uk/apollo/pokedex/internal/poketrainer"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/pokeclient"
+	"codeflow.dananglin.me.uk/apollo/pokecli/internal/poketrainer"
 )
 
 func VisitFunc(client *pokeclient.Client, trainer *poketrainer.Trainer) CommandFunc {
