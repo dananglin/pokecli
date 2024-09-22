@@ -22,5 +22,5 @@ jobs:
       with:
         target: test
       env:
-        POKEDEX_TEST_VERBOSE: "1"
-        POKEDEX_TEST_COVER: "1"
+        POKECLI_TEST_VERBOSE: "1"
+        POKECLI_TEST_COVER: "1"

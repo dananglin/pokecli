@@ -16,11 +16,11 @@ import (
 const (
 	app                  = "pokecli"
 	defaultInstallPrefix = "/usr/local"
-	envInstallPrefix     = "POKEDEX_INSTALL_PREFIX"
-	envTestVerbose       = "POKEDEX_TEST_VERBOSE"
-	envTestCover         = "POKEDEX_TEST_COVER"
-	envBuildRebuildAll   = "POKEDEX_BUILD_REBUILD_ALL"
-	envBuildVerbose      = "POKEDEX_BUILD_VERBOSE"
+	envInstallPrefix     = "POKECLI_INSTALL_PREFIX"
+	envTestVerbose       = "POKECLI_TEST_VERBOSE"
+	envTestCover         = "POKECLI_TEST_COVER"
+	envBuildRebuildAll   = "POKECLI_BUILD_REBUILD_ALL"
+	envBuildVerbose      = "POKECLI_BUILD_VERBOSE"
 )
 
 var (
@@ -29,8 +29,8 @@ var (
 )
 
 // Test run the go tests.
-// To enable verbose mode set POKEDEX_TEST_VERBOSE=1.
-// To enable coverage mode set POKEDEX_TEST_COVER=1.
+// To enable verbose mode set POKECLI_TEST_VERBOSE=1.
+// To enable coverage mode set POKECLI_TEST_COVER=1.
 func Test() error {
 	goTest := sh.RunCmd("go", "test")
 
@@ -53,8 +53,8 @@ func Lint() error {
 }
 
 // Build build the executable.
-// To rebuild packages that are already up-to-date set POKEDEX_BUILD_REBUILD_ALL=1
-// To enable verbose mode set POKEDEX_BUILD_VERBOSE=1
+// To rebuild packages that are already up-to-date set POKECLI_BUILD_REBUILD_ALL=1
+// To enable verbose mode set POKECLI_BUILD_VERBOSE=1
 func Build() error {
 	main := "main.go"
 	flags := ldflags()
