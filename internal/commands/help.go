@@ -3,7 +3,10 @@ package commands
 import (
 	"fmt"
 	"maps"
+	"os"
 	"slices"
+	"strings"
+	"text/tabwriter"
 )
 
 func HelpFunc(summaries map[string]string) CommandFunc {
@@ -16,13 +19,21 @@ func HelpFunc(summaries map[string]string) CommandFunc {
 
 		slices.Sort(keys)
 
-		fmt.Printf("\nCommands:\n")
+		var builder strings.Builder
+
+		builder.WriteString("\nCommands:\n")
+
+		tableWriter := tabwriter.NewWriter(&builder, 0, 8, 0, '\t', 0)
 
 		for _, key := range slices.All(keys) {
-			fmt.Printf("\n%s: %s", key, summaries[key])
+			fmt.Fprintf(tableWriter, "\n%s\t%s", key, summaries[key])
 		}
 
-		fmt.Printf("\n\n")
+		tableWriter.Flush()
+
+		builder.WriteString("\n\n")
+
+		fmt.Fprint(os.Stdout, builder.String())
 
 		return nil
 	}
