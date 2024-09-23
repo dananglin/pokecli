@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"maps"
 	"os"
 	"strings"
 	"time"
@@ -18,11 +17,7 @@ type command struct {
 	callback    commands.CommandFunc
 }
 
-func main() {
-	run()
-}
-
-func run() {
+func repl() {
 	var (
 		cacheCleanupInterval = 30 * time.Minute
 		httpTimeout          = 10 * time.Second
@@ -80,52 +75,46 @@ func run() {
 		callback:    commands.HelpFunc(summaries),
 	}
 
-	fmt.Printf("\nWelcome to the Pokedex!\n")
-	fmt.Print("\npokedex > ")
-
 	scanner := bufio.NewScanner(os.Stdin)
 
-	for scanner.Scan() {
+	loopFunc := func() {
+		defer printPrompt()
+
 		input := scanner.Text()
 
-		command, args := parseArgs(input)
+		command, args := parseInput(input)
 
 		cmd, ok := commandMap[command]
 		if !ok {
 			fmt.Println("ERROR: Unrecognised command.")
 
-			fmt.Print("\npokedex > ")
-
-			continue
+			return
 		}
 
 		if cmd.callback == nil {
 			fmt.Println("ERROR: This command is defined but does not have a callback function.")
 
-			fmt.Print("\npokedex > ")
-
-			continue
+			return
 		}
 
 		if err := commandMap[command].callback(args); err != nil {
 			fmt.Printf("ERROR: %v.\n", err)
+
+			return
 		}
+	}
 
-		fmt.Print("pokedex > ")
+	fmt.Printf("\nWelcome to the Pokemon world!\n")
+	printPrompt()
+
+	for scanner.Scan() {
+		loopFunc()
 	}
 }
 
-func summaryMap(commandMap map[string]command) map[string]string {
-	summaries := make(map[string]string)
-
-	for key, value := range maps.All(commandMap) {
-		summaries[key] = value.description
-	}
-
-	return summaries
-}
-
-func parseArgs(input string) (string, []string) {
+func parseInput(input string) (string, []string) {
+	input = strings.TrimSpace(input)
+	input = strings.ToLower(input)
 	split := strings.Split(input, " ")
 
 	if len(split) == 0 {
@@ -137,4 +126,8 @@ func parseArgs(input string) (string, []string) {
 	}
 
 	return split[0], split[1:]
+}
+
+func printPrompt() {
+	fmt.Print("pokecli > ")
 }

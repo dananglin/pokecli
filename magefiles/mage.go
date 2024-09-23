@@ -56,7 +56,7 @@ func Lint() error {
 // To rebuild packages that are already up-to-date set POKECLI_BUILD_REBUILD_ALL=1
 // To enable verbose mode set POKECLI_BUILD_VERBOSE=1
 func Build() error {
-	main := "main.go"
+	path := "./cmd/" + app
 	flags := ldflags()
 	build := sh.RunCmd("go", "build")
 	args := []string{"-ldflags=" + flags, "-o", binary}
@@ -69,7 +69,7 @@ func Build() error {
 		args = append(args, "-v")
 	}
 
-	args = append(args, main)
+	args = append(args, path)
 
 	return build(args...)
 }
